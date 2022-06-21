@@ -10,7 +10,7 @@ char *decrypt(unsigned int *encrypted_ascii, unsigned int n, unsigned int d);
 
 int main(){
 
-    printf("plain text : \n");
+    
     /*unsigned int n,e,d;
     keyGenerate(&n,&e,&d);
     printf("generated keys : \n");
