@@ -1,8 +1,4 @@
 #include <stdio.h>
-#define maxim 65537
-#define fuyi 65536
-#define one 65535
-#define round 8
 #define lo16(x) ((unsigned short)((x)&0xFFFF))
 #define hi16(x) ((unsigned short)((x) >> 16))
 /********************************************************/
@@ -67,7 +63,7 @@ void IdeaKeyGen(unsigned short key[8], unsigned short ekey[52], unsigned short d
         {
             ekey[i] = ekey[((i + 1) & 0x7) ? i - 7 : i - 15] << 9 | ekey[(((i + 2) & 0x7) < 2) ? i - 14 : i - 6] >> 7;
         }
-        printf("%d ", ekey[i]);
+        printf("%x", ekey[i]);
     }
     printf("\n");
     // テスト復号化鍵
@@ -101,38 +97,34 @@ void IdeaKeyGen(unsigned short key[8], unsigned short ekey[52], unsigned short d
 }
 /********************************************************/
 /* IDEA 暗号化及び復号化を行う関数 */
-/* 暗号化・復号化ともに構造は同じなので、個別に関数 */
-/* を用意する必要はない。 */ /* 今回はこの関数の中身を作成する */
 /********************************************************/
 void IdeaChipher(unsigned short plain[4], unsigned short chipher[4], unsigned short key[52])
 {
-    unsigned int r, x1, x2, x3, x4, kk, t1, t2, a, b;
+    unsigned int r, x1, x2, x3, x4, kk, t1, t2, a;
     x1 = plain[0];
     x2 = plain[1];
     x3 = plain[2];
     x4 = plain[3];
     for (r = 0; r < 48; r += 6)
     {
-        x1 = mul(x1, key[r]);                         // 1
-        x2 = mul(x2, key[r + 1]);                     // 2
-        x3 = (x3 + key[r + 2]) & one;                 // 3
-        x4 = (x4 + key[r + 3]) & one;                 // 4
-        kk = mul(key[r + 4], (x1 ^ x3));              // 5
-        t1 = mul(key[r + 5], (kk + (x2 ^ x4)) & one); // 6
-        t2 = (kk + t1) & one;                         // 7
-        a = x1 ^ t1;                                  // 8
-        x1 = x3 ^ t1;
-        b = x2 ^ t2; // 9
-        x2 = x4 ^ t2;
+        x1 = mul(x1, key[r]);
+        x2 = lo16(x2 + key[r + 1]);
+        x3 = lo16(x3 + key[r + 2]);
+        x4 = mul(x4, key[r + 3]);
+        kk = mul(key[r + 4], (x1 ^ x3));
+        t1 = mul(key[r + 5], (lo16(kk + (x2 ^ x4))));
+        t2 = lo16(kk + t1);
+        x1 = x1 ^ t1;
+        a = x2 ^ t2;
+        x2 = x3 ^ t1;
         x3 = a;
-        x4 = b;
-        printf("%d回目 = x1: %d, x2 : %d, x3 : %d, x4 : %d\n", r + 1, x1, x2, x3, x4);
+        x4 = x4 ^ t2;
     }
 
     chipher[0] = mul(x1, key[48]);
-    chipher[1] = mul(x2, key[49]);
-    chipher[2] = (x3 + key[50]) & one;
-    chipher[3] = (x4 + key[51]) & one;
+    chipher[1] = lo16(x3 + key[49]);
+    chipher[2] = lo16(x2 + key[50]);
+    chipher[3] = mul(x4, key[51]);
 }
 int main(void)
 {
@@ -182,7 +174,7 @@ int main(void)
         {
             getChipher[k] = output[j];
             k++;
-            printf("%x ", output[j]);
+            printf("%x", output[j]);
         }
     }
     printf("\n");
